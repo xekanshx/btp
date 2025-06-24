@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+import seaborn as sns   
 # Load the dataset
 df = pd.read_csv("/Users/mac/btp/dataset(in).csv")
 
@@ -34,18 +34,21 @@ df['Power'] = 0.5 * df['Air_Density'] * A * df['WS50M_Cubed']  # in watts
 # Suzlon S144 has a rated capacity of 3 MW
 df['Power'] = df['Power'].clip(upper=3_000_000)
 
-# Preview
-print(df[['Date', 'WS50M', 'Air_Density', 'Power']].head())
-
 # Plot power output
-plt.figure(figsize=(10, 5))
+'''plt.figure(figsize=(10, 5))
 plt.plot(df['Date'], df['Power'], color='darkgreen')
 plt.xlabel('Date')
 plt.ylabel('Simulated Power Output (W)')
 plt.title('Simulated Wind Power Output Over Time (Suzlon S144)')
 plt.grid(True)
 plt.tight_layout()
-plt.show()
+plt.show()'''
+sns.boxplot(x=df['WS50M'])
 
 # Optional: Save the updated dataset
-df.to_csv("/Users/mac/btp/preprocessed_with_power.csv", index=False)
+plt.figure(figsize=(8, 4))
+sns.boxplot(data=df, x='WS50M', color='skyblue')
+plt.title('Boxplot of Wind Speed at 50m')
+plt.xlabel('Wind Speed (m/s)')
+plt.tight_layout()
+plt.show()
