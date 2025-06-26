@@ -4,22 +4,19 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # --------------------- CONFIG ---------------------
 SEQ_LEN = 7
 BATCH_SIZE = 32
-EPOCHS = 50
+EPOCHS = 30
 LR = 1e-3
 
-# --------------------- LOAD + SCALE ---------------------
-df = pd.read_csv("/Users/mac/btp/preprocessed_with_power.csv")
-df_model = df.drop(columns=['Date'])
+# --------------------- LOAD REDUCED RF DATASET ---------------------
+df = pd.read_csv("/Users/mac/btp/reduced_scaled_top5_rf.csv")
+df['Power'] = np.log1p(df['Power'])  # During preprocessing
 
-scaler = StandardScaler()
-df_scaled = pd.DataFrame(scaler.fit_transform(df_model), columns=df_model.columns)
 
 # --------------------- SEQUENCE CREATION ---------------------
 def create_sequences(data, target_column, seq_len):
@@ -29,7 +26,7 @@ def create_sequences(data, target_column, seq_len):
         y.append(data.iloc[i][target_column])
     return np.array(X), np.array(y)
 
-X, y = create_sequences(df_scaled, target_column='Power', seq_len=SEQ_LEN)
+X, y = create_sequences(df, target_column='Power', seq_len=SEQ_LEN)
 
 X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, shuffle=False)
 X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, shuffle=False)
@@ -52,7 +49,6 @@ train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
 test_ds = TimeSeriesDataset(X_test, y_test)
 test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE)
-
 
 # --------------------- MODEL ---------------------
 class TimeSeriesTransformer(nn.Module):
@@ -116,6 +112,7 @@ model = TimeSeriesTransformer(
 )
 
 train_model(model, train_loader, val_loader, epochs=EPOCHS, lr=LR)
+
 # --------------------- EVALUATE ON TEST SET ---------------------
 model.eval()
 test_preds, test_true = [], []
@@ -145,4 +142,3 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
-
